@@ -118,6 +118,15 @@ extra_kargs = image_conf.get('extra-kargs', [])
 
 with open('/usr/lib/coreos-assembler/image-base.ks') as basef:
     buf = basef.read()
+    arch = platform.machine()
+    if arch == "s390x":
+        # Set ignition variables to trigger the first boot
+        extra_kargs.append("ignition.firstboot ignition.platform.id=file rd.neednet=1 ip=dhcp")
+        # Disable efi-mount on s390x
+        extra_kargs.append("systemd.mask=boot-efi.mount systemd.mask=local-fs.target")
+        # Disable cpi service for KVM (interface not supported by KVM)
+        extra_kargs.append("systemd.mask=cpi")
+
     buf = buf.replace('%%KARGS%%', ' '.join(extra_kargs))
     ks_tmp.write(buf)
 
